@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0D0D18" />
+<title>AIRWAVE · 播客库</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<style>
+/* ── CSS Variables ── */
+:root {
+  --bg:         #0D0D18;
+  --surface-1:  #131320;
+  --surface-2:  #1A1A2C;
+  --surface-3:  #222237;
+  --border:     rgba(255,255,255,.07);
+  --border-2:   rgba(255,255,255,.12);
+  --text-1:     #F0F0F8;
+  --text-2:     #9090B0;
+  --text-3:     #5A5A7A;
+  --accent:     #8B6BFF;
+  --accent-glow:rgba(139,107,255,.28);
+  --accent-2:   #60C8FF;
+  --accent-grad:linear-gradient(135deg,#8B6BFF,#60C8FF);
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body {
+  background:var(--bg); color:var(--text-1);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+body {
+  font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei UI",
+              "Segoe UI",system-ui,sans-serif;
+  padding-bottom:calc(180px + env(safe-area-inset-bottom));
+  min-height:100dvh;
+}
+a { color:inherit; text-decoration:none; }
+button { -webkit-tap-highlight-color:transparent; }
+
+/* ── Global noise texture overlay ── */
+body::before {
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+  opacity:1;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--surface-3); border-radius:4px; }
+
+/* ─────────── HEADER ─────────── */
+header {
+  position:sticky; top:0; z-index:30;
+  padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+  background:rgba(13,13,24,.88);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--border);
+}
+
+.h-brand {
+  display:flex; align-items:center; gap:11px;
+}
+.h-wordmark {
+  display:flex; flex-direction:column;
+}
+.h-name {
+  font-size:15px; font-weight:700; letter-spacing:.06em;
+  background:var(--accent-grad); -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent; background-clip:text;
+  line-height:1;
+}
+.h-tagline {
+  font-size:11px; color:var(--text-3); letter-spacing:.04em;
+  margin-top:3px; line-height:1;
+}
+.h-contact {
+  margin-left:auto; flex:0 0 auto;
+  font-size:12px; color:var(--text-2);
+  background:var(--surface-2);
+  border:1px solid var(--border-2);
+  border-radius:999px; padding:4px 12px;
+  letter-spacing:.04em; cursor:pointer;
+  display:flex; align-items:center; gap:5px;
+  transition:all .18s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.h-contact:hover, .h-contact:active {
+  border-color:rgba(139,107,255,.5);
+  color:var(--accent);
+  box-shadow:0 0 12px var(--accent-glow);
+}
+.h-contact svg { flex:0 0 auto; }
+
+/* ── WeChat QR Modal ── */
+.wechat-modal {
+  position:fixed; inset:0; z-index:100;
+  display:none; align-items:center; justify-content:center;
+}
+.wechat-modal.open { display:flex; }
+.wechat-backdrop {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+}
+.wechat-card {
+  position:relative; z-index:1;
+  background:rgba(22,22,38,.97);
+  border:1px solid var(--border-2);
+  border-radius:var(--radius-lg);
+  padding:28px 24px 24px;
+  width:min(300px, 85vw);
+  box-shadow:0 16px 60px rgba(0,0,0,.7);
+  text-align:center;
+}
+.wechat-card-title {
+  font-size:15px; font-weight:600; color:var(--text-1);
+  margin-bottom:4px; letter-spacing:.04em;
+}
+.wechat-card-sub {
+  font-size:12px; color:var(--text-3); margin-bottom:18px;
+}
+.wechat-qr {
+  width:100%; border-radius:var(--radius-md);
+  display:block;
+}
+.wechat-close {
+  margin-top:16px;
+  display:inline-block; padding:8px 24px;
+  border-radius:999px; font-size:13px;
+  background:var(--surface-2); color:var(--text-2);
+  border:1px solid var(--border); cursor:pointer;
+  transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.wechat-close:active { transform:scale(.95); }
+
+/* Logo mark (SVG wave) */
+.logo-mark {
+  width:34px; height:34px; flex:0 0 auto;
+  border-radius:var(--radius-sm);
+  background:var(--surface-2);
+  border:1px solid var(--border-2);
+  display:grid; place-items:center;
+  position:relative; overflow:hidden;
+}
+.logo-mark::after {
+  content:"";
+  position:absolute; inset:0;
+  background:var(--accent-grad);
+  opacity:.12;
+  border-radius:inherit;
+}
+.logo-mark svg { position:relative; z-index:1; }
+
+/* Search */
+.search {
+  margin-top:12px; position:relative;
+}
+.search-icon {
+  position:absolute; left:13px; top:50%; transform:translateY(-50%);
+  width:15px; height:15px; color:var(--text-3); pointer-events:none;
+}
+.search input {
+  width:100%; height:40px;
+  background:var(--surface-1); color:var(--text-1);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:0 14px 0 38px; font-size:13.5px; outline:none;
+  transition:border-color .2s;
+}
+.search input:focus {
+  border-color:rgba(139,107,255,.45);
+  background:var(--surface-2);
+}
+.search input::placeholder { color:var(--text-3); }
+
+/* ─────────── MONTH NAV ─────────── */
+.month-nav {
+  display:flex; align-items:center; gap:6px;
+  padding:11px 18px 0; overflow-x:auto; scrollbar-width:none;
+  position:relative; z-index:1;
+}
+.month-nav::-webkit-scrollbar { display:none; }
+
+.mnav-tab {
+  flex:0 0 auto; padding:5px 13px;
+  border-radius:999px; font-size:12px; letter-spacing:.02em;
+  background:var(--surface-1); color:var(--text-2);
+  border:1px solid var(--border); cursor:pointer;
+  transition:all .18s ease;
+  -webkit-tap-highlight-color:transparent;
+  white-space:nowrap;
+}
+.mnav-tab.on {
+  background:transparent;
+  border-color:var(--accent);
+  color:var(--accent);
+  box-shadow:0 0 12px var(--accent-glow);
+}
+/* "···" more button */
+.mnav-more {
+  flex:0 0 auto; width:32px; height:28px;
+  border-radius:999px; font-size:14px; letter-spacing:.06em;
+  background:var(--surface-1); color:var(--text-2);
+  border:1px solid var(--border); cursor:pointer;
+  display:grid; place-items:center; line-height:1;
+  transition:all .18s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.mnav-more.open {
+  border-color:var(--border-2); color:var(--text-1); background:var(--surface-2);
+}
+
+/* Month picker overlay */
+.month-picker {
+  position:fixed; inset:0; z-index:40;
+  display:none;
+}
+.month-picker.open { display:block; }
+.month-picker-backdrop {
+  position:absolute; inset:0; background:rgba(0,0,0,.55);
+  backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+}
+.month-picker-panel {
+  position:absolute; top:calc(env(safe-area-inset-top) + 106px); left:14px; right:14px;
+  background:rgba(22,22,38,.97);
+  border:1px solid var(--border-2);
+  border-radius:var(--radius-lg);
+  padding:16px;
+  box-shadow:0 8px 40px rgba(0,0,0,.6);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  z-index:1;
+}
+.month-picker-title {
+  font-size:11px; color:var(--text-3); letter-spacing:.08em;
+  text-transform:uppercase; margin-bottom:12px;
+}
+.month-picker-grid {
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;
+}
+.month-picker-item {
+  padding:9px 6px; border-radius:var(--radius-sm);
+  font-size:12.5px; text-align:center; cursor:pointer;
+  background:var(--surface-2); color:var(--text-2);
+  border:1px solid var(--border);
+  transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.month-picker-item.on {
+  background:rgba(139,107,255,.15);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.month-picker-item:active { transform:scale(.94); }
+
+/* ─────────── SECTION LABEL ─────────── */
+.section-label {
+  display:flex; align-items:center; gap:8px;
+  margin:20px 18px 10px;
+  font-size:11px; color:var(--text-3); letter-spacing:.08em; text-transform:uppercase;
+}
+.section-label::after {
+  content:""; flex:1; height:1px;
+  background:linear-gradient(90deg, var(--border-2), transparent);
+}
+
+/* ─────────── EPISODE CARD ─────────── */
+main { padding:0 14px; position:relative; z-index:1; }
+
+.card {
+  display:flex; align-items:center; gap:13px;
+  background:var(--surface-1);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:13px 13px 13px 14px;
+  margin-bottom:9px;
+  cursor:pointer;
+  transition:border-color .2s, background .2s, transform .12s;
+  -webkit-tap-highlight-color:transparent;
+  position:relative; overflow:hidden;
+}
+.card::before {
+  content:""; position:absolute; inset:0;
+  background:var(--accent-grad); opacity:0; border-radius:inherit;
+  transition:opacity .2s;
+}
+.card:active { transform:scale(.985); }
+.card.playing {
+  border-color:rgba(139,107,255,.35);
+  background:var(--surface-2);
+}
+.card.playing::before { opacity:.04; }
+
+/* Waveform art (left) */
+.art {
+  flex:0 0 auto; width:50px; height:50px; border-radius:10px;
+  background:var(--surface-3);
+  border:1px solid var(--border-2);
+  display:grid; place-items:center; position:relative; overflow:hidden;
+}
+.art svg { position:relative; z-index:1; }
+.art-gradient {
+  position:absolute; inset:0;
+  background:var(--accent-grad); opacity:.15;
+}
+.art-bar-anim {
+  display:none; gap:2px; align-items:flex-end; height:20px; position:relative; z-index:1;
+}
+.art-bar-anim .b {
+  width:3px; border-radius:2px;
+  background:var(--accent);
+  animation:barBounce 0.8s ease-in-out infinite;
+}
+.art-bar-anim .b:nth-child(1){ height:60%; animation-delay:0s; }
+.art-bar-anim .b:nth-child(2){ height:100%; animation-delay:.12s; }
+.art-bar-anim .b:nth-child(3){ height:45%; animation-delay:.24s; }
+.art-bar-anim .b:nth-child(4){ height:80%; animation-delay:.06s; }
+.art-bar-anim .b:nth-child(5){ height:35%; animation-delay:.18s; }
+.card.playing .art-bar-anim { display:flex; }
+.card.playing .art-icon { display:none; }
+@keyframes barBounce {
+  0%,100%{ transform:scaleY(.5); }
+  50%    { transform:scaleY(1);   }
+}
+
+/* Meta */
+.meta { flex:1 1 auto; min-width:0; }
+.meta-title {
+  font-size:14.5px; font-weight:500; line-height:1.35;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:var(--text-1);
+}
+.card.playing .meta-title { color:var(--accent); }
+.meta-row {
+  display:flex; gap:0; align-items:center; margin-top:6px;
+  flex-wrap:wrap; gap:5px;
+}
+.meta-dur {
+  font-size:11px; color:var(--text-3);
+  white-space:nowrap;
+}
+.meta-kw {
+  display:inline-block; padding:1px 7px;
+  border-radius:4px; font-size:10.5px;
+  background:var(--surface-3); color:var(--text-2);
+  border:1px solid var(--border); white-space:nowrap;
+}
+.fav-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--accent); flex:0 0 auto;
+  margin-right:6px; box-shadow:0 0 6px var(--accent-glow);
+}
+
+/* Play button (right) */
+.btn-play-card {
+  flex:0 0 auto; width:40px; height:40px; border-radius:50%;
+  border:0; cursor:pointer;
+  display:grid; place-items:center; position:relative;
+  background:transparent;
+  transition:transform .14s;
+}
+.btn-play-card:active { transform:scale(.88); }
+.btn-play-card .ring {
+  position:absolute; inset:0; border-radius:50%;
+  border:1.5px solid rgba(139,107,255,.4);
+  transition:border-color .2s;
+}
+.card.playing .btn-play-card .ring {
+  border-color:var(--accent);
+  box-shadow:0 0 10px var(--accent-glow);
+}
+.btn-play-card svg { position:relative; z-index:1; }
+
+/* Empty state */
+.empty {
+  text-align:center; color:var(--text-3);
+  padding:70px 20px; font-size:13px; line-height:1.8;
+  position:relative; z-index:1;
+}
+.empty strong { display:block; font-size:15px; color:var(--text-2); margin-bottom:6px; }
+
+/* ─────────── BOTTOM PLAYER ─────────── */
+.player {
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  transform:translateY(110%);
+  transition:transform .3s cubic-bezier(.25,.8,.25,1);
+}
+.player.on { transform:translateY(0); }
+
+/* Glass card container */
+.player-glass {
+  margin:0 10px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(18,18,32,.92);
+  backdrop-filter:blur(24px) saturate(200%);
+  -webkit-backdrop-filter:blur(24px) saturate(200%);
+  border:1px solid var(--border-2);
+  border-radius:var(--radius-lg);
+  padding:14px 16px 16px;
+  box-shadow:
+    0 -2px 40px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(255,255,255,.04) inset;
+}
+
+/* Row 1: title + controls */
+.p-row1 {
+  display:flex; align-items:center; gap:11px;
+}
+.p-art {
+  flex:0 0 auto; width:42px; height:42px; border-radius:9px;
+  background:var(--surface-3);
+  border:1px solid var(--border-2);
+  display:grid; place-items:center; position:relative; overflow:hidden;
+}
+.p-art .art-gradient { opacity:.2; }
+
+.p-title-wrap { flex:1 1 auto; min-width:0; }
+.p-title {
+  font-size:13.5px; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:var(--text-1);
+}
+.p-status { font-size:11px; color:var(--text-3); margin-top:2px; }
+
+.p-ctrl { display:flex; align-items:center; gap:5px; flex:0 0 auto; }
+
+/* Control buttons */
+.p-btn {
+  width:34px; height:34px; border-radius:50%; border:0; cursor:pointer;
+  background:var(--surface-3); color:var(--text-2);
+  display:grid; place-items:center;
+  transition:background .15s, color .15s, transform .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.p-btn:active { transform:scale(.85); }
+.p-btn:hover  { background:var(--surface-2); color:var(--text-1); }
+
+.p-btn.main {
+  width:42px; height:42px;
+  background:var(--accent-grad);
+  color:#fff;
+  box-shadow:0 4px 16px var(--accent-glow);
+}
+.p-btn.main:hover { filter:brightness(1.1); }
+
+/* Row 2: progress */
+.p-row2 {
+  display:flex; align-items:center; gap:9px;
+  margin-top:12px;
+}
+.p-time {
+  font-size:10.5px; color:var(--text-3);
+  font-variant-numeric:tabular-nums; flex:0 0 auto; width:36px;
+}
+.p-time.right { text-align:right; }
+
+.p-track {
+  flex:1 1 auto; height:3px;
+  background:var(--surface-3); border-radius:3px;
+  position:relative; cursor:pointer;
+  /* larger touch area */
+  padding:8px 0; margin:-8px 0;
+}
+.p-track-inner {
+  height:3px; border-radius:3px; position:relative;
+  overflow:visible; pointer-events:none;
+}
+.p-fill {
+  position:absolute; left:0; top:0; height:100%;
+  background:var(--accent-grad); border-radius:3px; width:0%;
+  transition:width .1s linear;
+}
+.p-thumb {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:12px; height:12px; background:#fff; border-radius:50%;
+  box-shadow:0 0 0 3px var(--accent-glow), 0 1px 4px rgba(0,0,0,.4);
+  left:0%; transition:left .1s linear;
+  pointer-events:none;
+}
+
+/* Row 3: extras */
+.p-row3 {
+  display:flex; align-items:center; gap:6px;
+  margin-top:10px; justify-content:space-between;
+}
+.p-rates { display:flex; gap:4px; }
+.p-rates button {
+  background:var(--surface-3); border:1px solid var(--border);
+  color:var(--text-3); padding:4px 9px;
+  border-radius:6px; font-size:11px; cursor:pointer;
+  transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.p-rates button.on {
+  background:rgba(139,107,255,.18);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.p-actions { display:flex; gap:4px; }
+.p-actions button {
+  background:var(--surface-3); border:1px solid var(--border);
+  color:var(--text-3); padding:4px 10px;
+  border-radius:6px; font-size:11px; cursor:pointer;
+  transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+  display:flex; align-items:center; gap:4px;
+}
+.p-actions button.on {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(139,107,255,.12);
+}
+.p-actions button.fav.on {
+  border-color:#F0A030; color:#F0A030;
+  background:rgba(240,160,48,.1);
+}
+
+/* ─────────── MEDIA QUERY ─────────── */
+@media (min-width:700px){
+  body { max-width:700px; margin:0 auto; }
+  .player { max-width:700px; left:50%; transform:translateX(-50%) translateY(110%); }
+  .player.on { transform:translateX(-50%) translateY(0); }
+}
+</style>
+<link rel="manifest" href="manifest.json" />
+<script>
+if ('serviceWorker' in navigator)
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="h-brand">
+    <div class="logo-mark">
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+        <rect x="0"  y="5"  width="2.5" height="4"  rx="1.25" fill="#8B6BFF"/>
+        <rect x="4"  y="2"  width="2.5" height="10" rx="1.25" fill="#8B6BFF" opacity=".8"/>
+        <rect x="8"  y="0"  width="2.5" height="14" rx="1.25" fill="#60C8FF"/>
+        <rect x="12" y="3"  width="2.5" height="8"  rx="1.25" fill="#8B6BFF" opacity=".75"/>
+        <rect x="15.5" y="5.5" width="2.5" height="3" rx="1.25" fill="#60C8FF" opacity=".6"/>
+      </svg>
+    </div>
+    <div class="h-wordmark">
+      <div class="h-name">AIRWAVE</div>
+    </div>
+    <button class="h-contact" id="btn-contact" aria-label="联系我">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      联系我
+    </button>
+  </div>
+  <div class="search">
+    <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <circle cx="6.5" cy="6.5" r="4.5"/>
+      <line x1="10" y1="10" x2="14" y2="14"/>
+    </svg>
+    <input id="q" placeholder="搜索标题、主题、关键词" autocomplete="off" spellcheck="false" />
+  </div>
+</header>
+
+<!-- ── WECHAT QR MODAL ── -->
+<div class="wechat-modal" id="wechat-modal">
+  <div class="wechat-backdrop" id="wechat-backdrop"></div>
+  <div class="wechat-card">
+    <div class="wechat-card-title">Caspar.jade</div>
+    <div class="wechat-card-sub">扫码添加微信</div>
+    <img class="wechat-qr" src="wechat-qr.jpg" alt="微信二维码" />
+    <button class="wechat-close" id="wechat-close">关闭</button>
+  </div>
+</div>
+
+<!-- ── MONTH NAV ── -->
+<div class="month-nav" id="month-nav">
+  <!-- rendered by JS -->
+</div>
+
+<!-- ── MONTH PICKER OVERLAY ── -->
+<div class="month-picker" id="month-picker">
+  <div class="month-picker-backdrop" id="picker-backdrop"></div>
+  <div class="month-picker-panel">
+    <div class="month-picker-title">选择月份</div>
+    <div class="month-picker-grid" id="picker-grid"></div>
+  </div>
+</div>
+
+<!-- ── LIST ── -->
+<main id="list"></main>
+
+<!-- ── BOTTOM PLAYER ── -->
+<div class="player" id="player">
+  <div class="player-glass">
+    <!-- Row 1 -->
+    <div class="p-row1">
+      <div class="p-art">
+        <div class="art-gradient"></div>
+        <svg width="16" height="12" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+          <rect x="0"  y="5"  width="2.5" height="4"  rx="1.25" fill="#8B6BFF"/>
+          <rect x="4"  y="2"  width="2.5" height="10" rx="1.25" fill="#8B6BFF" opacity=".8"/>
+          <rect x="8"  y="0"  width="2.5" height="14" rx="1.25" fill="#60C8FF"/>
+          <rect x="12" y="3"  width="2.5" height="8"  rx="1.25" fill="#8B6BFF" opacity=".75"/>
+          <rect x="15.5" y="5.5" width="2.5" height="3" rx="1.25" fill="#60C8FF" opacity=".6"/>
+        </svg>
+      </div>
+      <div class="p-title-wrap">
+        <div class="p-title" id="p-title">未在播放</div>
+        <div class="p-status" id="p-status">点击列表即可播放</div>
+      </div>
+      <div class="p-ctrl">
+        <button class="p-btn" id="btn-prev" aria-label="上一期">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <polygon points="13,0 13,14 5,7"/>
+            <rect x="0" y="0" width="3.5" height="14" rx="1.5"/>
+          </svg>
+        </button>
+        <button class="p-btn main" id="btn-play" aria-label="播放/暂停">
+          <svg id="icon-play" width="14" height="14" viewBox="0 0 12 14" fill="white" aria-hidden="true">
+            <polygon points="0,0 12,7 0,14"/>
+          </svg>
+          <svg id="icon-pause" width="14" height="14" viewBox="0 0 12 14" fill="white" aria-hidden="true" style="display:none">
+            <rect x="0" y="0" width="4" height="14" rx="2"/>
+            <rect x="8" y="0" width="4" height="14" rx="2"/>
+          </svg>
+        </button>
+        <button class="p-btn" id="btn-next" aria-label="下一期">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <polygon points="1,0 1,14 9,7"/>
+            <rect x="10.5" y="0" width="3.5" height="14" rx="1.5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Row 2: progress -->
+    <div class="p-row2">
+      <div class="p-time" id="p-cur">0:00</div>
+      <div class="p-track" id="p-track">
+        <div class="p-track-inner">
+          <div class="p-fill" id="p-fill"></div>
+          <div class="p-thumb" id="p-thumb"></div>
+        </div>
+      </div>
+      <div class="p-time right" id="p-dur">--:--</div>
+    </div>
+
+    <!-- Row 3: rate + extras -->
+    <div class="p-row3">
+      <div class="p-rates" id="p-rates">
+        <button data-r="0.75">0.75x</button>
+        <button data-r="1" class="on">1x</button>
+        <button data-r="1.25">1.25x</button>
+        <button data-r="1.5">1.5x</button>
+        <button data-r="2">2x</button>
+      </div>
+      <div class="p-actions">
+        <button id="btn-loop" class="on">
+          <svg width="12" height="10" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M1 4C1 2.3 2.3 1 4 1h6l-2-1.5m0 3L10 1"/>
+            <path d="M13 8C13 9.7 11.7 11 10 11H4l2 1.5m0-3L4 11"/>
+          </svg>
+          连播
+        </button>
+        <button id="btn-fav" class="fav">
+          <svg id="fav-icon" width="11" height="11" viewBox="0 0 14 13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M7 11.5L1.5 6.2C.5 5.2.5 3.6 1.5 2.6A3 3 0 015.5 2.4L7 3.8 8.5 2.4A3 3 0 0112.5 2.6C13.5 3.6 13.5 5.2 12.5 6.2z"/>
+          </svg>
+          收藏
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
+
+<script>
+/* ─── Data ─── */
+const PODCASTS = [
+  {
+    id:       "2026-06-15",
+    title:    "药食天平：寻找精准平衡点",
+    date:     "2026-06-15",
+    duration: 2528,
+    file:     "audio/2026-06-15.mp3",
+    topic:    "健康消费",
+    tags:     ["健康","消费","白皮书"]
+  }
+];
+
+/* ─── Helpers ─── */
+const $  = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+function fmt(s){
+  s = Math.max(0, Math.floor(s||0));
+  const m = Math.floor(s/60), r = s%60;
+  return m+":"+String(r).padStart(2,"0");
+}
+function fmtHuman(s){
+  s = Math.max(0, Math.floor(s||0));
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h ? h+"h "+m+"m" : m+"min";
+}
+function monLabel(ym){          // "2026-06" → "6月"  (shown in nav)
+  const [y,m] = ym.split("-");
+  return m.replace(/^0/,"")+"月";
+}
+function monLabelFull(ym){      // "2026-06" → "2026年6月"  (shown in picker)
+  const [y,m] = ym.split("-");
+  return y+"年"+m.replace(/^0/,"")+"月";
+}
+function loadFavs(){ try{ return JSON.parse(localStorage.getItem("wv_favs")||"[]"); }catch{ return []; } }
+function saveFavs(){ localStorage.setItem("wv_favs", JSON.stringify(favs)); }
+
+/* all distinct months, sorted desc */
+function allMonths(){
+  const s = new Set(PODCASTS.map(p=>p.date.slice(0,7)));
+  return [...s].sort((a,b)=>b.localeCompare(a));
+}
+
+/* ─── State ─── */
+const audio   = $("#audio");
+const player  = $("#player");
+let curIndex  = -1;
+let loopMode  = true;
+let favs      = loadFavs();
+let isDragging = false;
+let activeMon = "all";    // "all" or "YYYY-MM"
+
+/* ─────────── MONTH NAV ─────────── */
+const INLINE_LIMIT = 3;   // "全部" + how many recent months to show inline
+
+function renderMonthNav(){
+  const nav    = $("#month-nav");
+  const months = allMonths();                     // sorted desc
+  const inline = months.slice(0, INLINE_LIMIT);  // show at most 3 recent months
+  const hidden = months.slice(INLINE_LIMIT);
+
+  let html = `<div class="mnav-tab on" data-m="all">全部</div>`;
+  inline.forEach(ym => {
+    html += `<div class="mnav-tab" data-m="${ym}">${monLabelFull(ym)}</div>`;
+  });
+  if (hidden.length > 0){
+    html += `<button class="mnav-more" id="mnav-more-btn" title="更多月份">···</button>`;
+  }
+  nav.innerHTML = html;
+
+  // highlight active tab
+  nav.querySelectorAll(".mnav-tab").forEach(el=>{
+    if (el.dataset.m === activeMon) el.classList.add("on");
+    else el.classList.remove("on");
+    el.onclick = ()=>{ setMonth(el.dataset.m); };
+  });
+
+  // more button
+  const moreBtn = $("#mnav-more-btn");
+  if (moreBtn) moreBtn.onclick = openPicker;
+
+  // populate picker grid
+  const grid = $("#picker-grid");
+  const allTab = `<div class="month-picker-item${activeMon==="all"?" on":""}" data-m="all">全部</div>`;
+  grid.innerHTML = allTab + months.map(ym=>
+    `<div class="month-picker-item${activeMon===ym?" on":""}" data-m="${ym}">${monLabelFull(ym)}</div>`
+  ).join("");
+  grid.querySelectorAll(".month-picker-item").forEach(el=>{
+    el.onclick = ()=>{ setMonth(el.dataset.m); closePicker(); };
+  });
+}
+
+function setMonth(m){
+  activeMon = m;
+  renderMonthNav();
+  renderList();
+  // scroll list to section if a specific month
+  if (m !== "all"){
+    const sec = $(`[data-section="${m}"]`);
+    if (sec) sec.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+}
+
+function openPicker(){
+  $("#month-picker").classList.add("open");
+  $("#mnav-more-btn")&&$("#mnav-more-btn").classList.add("open");
+}
+function closePicker(){
+  $("#month-picker").classList.remove("open");
+  $("#mnav-more-btn")&&$("#mnav-more-btn").classList.remove("open");
+}
+$("#picker-backdrop").onclick = closePicker;
+
+/* ─────────── LIST RENDER ─────────── */
+function groupByMonth(items){
+  const m = {};
+  items.forEach(it=>{ const k=it.date.slice(0,7); (m[k]=m[k]||[]).push(it); });
+  return Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]));
+}
+
+function renderList(){
+  const q = ($("#q").value||"").trim().toLowerCase();
+  let items = PODCASTS.filter(it=>{
+    if (activeMon !== "all" && it.date.slice(0,7) !== activeMon) return false;
+    return !q || (it.title+it.topic+(it.tags||[]).join(" ")).toLowerCase().includes(q);
+  });
+  items.sort((a,b)=>(favs.includes(b.id)?1:0)-(favs.includes(a.id)?1:0));
+
+  // h-count removed
+  const list = $("#list");
+  list.innerHTML="";
+
+  if (!items.length){
+    list.innerHTML=`<div class="empty"><strong>暂无匹配内容</strong>换个关键词试试</div>`;
+    return;
+  }
+
+  for (const [mon, eps] of groupByMonth(items)){
+    const sec = document.createElement("div");
+    sec.className = "section-label";
+    sec.dataset.section = mon;
+    sec.textContent = monLabelFull(mon);
+    list.appendChild(sec);
+
+    for (const it of eps){
+      const idx   = PODCASTS.indexOf(it);
+      const isCur = idx===curIndex;
+      const isPlay = isCur && !audio.paused;
+      const isFav = favs.includes(it.id);
+      const card  = document.createElement("div");
+      card.className = "card"+(isCur?" playing":"");
+      card.dataset.idx = idx;
+
+      // keywords: only show tags (no topic/source)
+      const kwHtml = (it.tags||[]).map(t=>
+        `<span class="meta-kw">${t}</span>`
+      ).join("");
+
+      card.innerHTML=`
+        <div class="art">
+          <div class="art-gradient"></div>
+          <div class="art-icon">
+            <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+              <rect x="0"  y="5"  width="2.5" height="4"  rx="1.25" fill="#8B6BFF"/>
+              <rect x="4"  y="2"  width="2.5" height="10" rx="1.25" fill="#8B6BFF" opacity=".8"/>
+              <rect x="8"  y="0"  width="2.5" height="14" rx="1.25" fill="#60C8FF"/>
+              <rect x="12" y="3"  width="2.5" height="8"  rx="1.25" fill="#8B6BFF" opacity=".75"/>
+              <rect x="15.5" y="5.5" width="2.5" height="3" rx="1.25" fill="#60C8FF" opacity=".6"/>
+            </svg>
+          </div>
+          <div class="art-bar-anim">
+            <div class="b"></div><div class="b"></div><div class="b"></div>
+            <div class="b"></div><div class="b"></div>
+          </div>
+        </div>
+        <div class="meta">
+          <div class="meta-title">
+            ${isFav?'<span class="fav-dot"></span>':''}${it.title}
+          </div>
+          <div class="meta-row">
+            <span class="meta-dur">${fmtHuman(it.duration)}</span>
+            ${kwHtml}
+          </div>
+        </div>
+        <button class="btn-play-card" aria-label="${isPlay?'暂停':'播放'}">
+          <div class="ring"></div>
+          ${isPlay
+            ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="var(--accent)" aria-hidden="true"><rect x="0" y="0" width="4" height="12" rx="2"/><rect x="8" y="0" width="4" height="12" rx="2"/></svg>`
+            : `<svg width="11" height="12" viewBox="0 0 10 12" fill="var(--text-2)" aria-hidden="true"><polygon points="0,0 10,6 0,12"/></svg>`}
+        </button>`;
+      card.querySelector(".btn-play-card").onclick = e => { e.stopPropagation(); playAt(idx); };
+      card.onclick = () => playAt(idx);
+      list.appendChild(card);
+    }
+  }
+}
+
+/* ─── Playback ─── */
+function playAt(i){
+  if (i<0||i>=PODCASTS.length) return;
+  const sameTrack = i===curIndex;
+  curIndex = i;
+  const it = PODCASTS[i];
+  $("#p-title").textContent  = it.title;
+  $("#p-status").textContent = it.topic+" · "+it.date;
+  player.classList.add("on");
+
+  if (sameTrack && !audio.paused){ audio.pause(); return; }
+  if (sameTrack && audio.paused && audio.src){ audio.play(); return; }
+
+  const url = it.file+"?t="+Date.now();
+  audio.src = url; audio.load();
+  audio.play().catch(err=>{
+    $("#p-title").textContent = "播放失败："+err.message;
+    console.error("play err:",err,"src:",audio.src);
+  });
+
+  if ('mediaSession' in navigator){
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title:  it.title,
+      artist: it.tags.join(" · "),
+      album:  "AIRWAVE · "+it.date
+    });
+    navigator.mediaSession.setActionHandler("play",  ()=>audio.play());
+    navigator.mediaSession.setActionHandler("pause", ()=>audio.pause());
+    navigator.mediaSession.setActionHandler("previoustrack",
+      ()=>curIndex>0&&playAt(curIndex-1));
+    navigator.mediaSession.setActionHandler("nexttrack",
+      ()=>curIndex<PODCASTS.length-1&&playAt(curIndex+1));
+  }
+}
+
+audio.addEventListener("error", ()=>{
+  const e = audio.error;
+  const msg = e?({1:"已中止",2:"网络错误",3:"解码失败",4:"格式或地址不可用"}[e.code]||"错误 "+e.code):"未知";
+  $("#p-title").textContent = "无法播放："+msg;
+});
+
+function syncPlayIcon(playing){
+  $("#icon-play").style.display  = playing?"none":"";
+  $("#icon-pause").style.display = playing?"":"none";
+}
+audio.addEventListener("play",    ()=>{ syncPlayIcon(true);  renderList(); });
+audio.addEventListener("pause",   ()=>{ syncPlayIcon(false); renderList(); });
+audio.addEventListener("ended",   ()=>{
+  syncPlayIcon(false);
+  if (curIndex<PODCASTS.length-1) playAt(curIndex+1);
+  else if (loopMode) playAt(0);
+  else renderList();
+});
+audio.addEventListener("loadedmetadata", ()=>{
+  $("#p-dur").textContent = fmt(audio.duration);
+});
+audio.addEventListener("timeupdate", ()=>{
+  if (isDragging) return;
+  const t = audio.currentTime, d = audio.duration||0;
+  $("#p-cur").textContent = fmt(t);
+  if (d){ const p=t/d*100; $("#p-fill").style.width=p+"%"; $("#p-thumb").style.left=p+"%"; }
+});
+
+/* controls */
+$("#btn-play").onclick = ()=>{
+  if (curIndex<0){ if(PODCASTS.length) playAt(0); return; }
+  audio.paused ? audio.play() : audio.pause();
+};
+$("#btn-prev").onclick = ()=> curIndex>0 && playAt(curIndex-1);
+$("#btn-next").onclick = ()=>{
+  if (curIndex<PODCASTS.length-1) playAt(curIndex+1);
+  else if (loopMode) playAt(0);
+};
+$("#btn-loop").onclick = e=>{
+  loopMode = !loopMode;
+  e.currentTarget.classList.toggle("on", loopMode);
+};
+$("#btn-fav").onclick = ()=>{
+  if (curIndex<0) return;
+  const id = PODCASTS[curIndex].id;
+  const ix = favs.indexOf(id);
+  if (ix>=0) favs.splice(ix,1); else favs.push(id);
+  saveFavs();
+  syncFavBtn();
+  renderList();
+};
+function syncFavBtn(){
+  const on = curIndex>=0 && favs.includes(PODCASTS[curIndex].id);
+  $("#btn-fav").classList.toggle("on", on);
+  const icon = $("#fav-icon");
+  if (on) icon.setAttribute("fill","currentColor");
+  else    icon.setAttribute("fill","none");
+}
+
+/* rate buttons */
+$$(".p-rates button").forEach(b=>{
+  b.onclick=()=>{
+    const r = parseFloat(b.dataset.r);
+    audio.playbackRate = r;
+    $$(".p-rates button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+  };
+});
+
+/* progress seek */
+function seekTo(e){
+  if (!audio.duration) return;
+  const rect = $("#p-track").getBoundingClientRect();
+  const x = (e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+  const p = Math.max(0,Math.min(1,x/rect.width));
+  audio.currentTime = p*audio.duration;
+  const pct = p*100;
+  $("#p-fill").style.width=pct+"%";
+  $("#p-thumb").style.left=pct+"%";
+}
+const track = $("#p-track");
+track.addEventListener("click",  seekTo);
+track.addEventListener("touchstart", e=>{ isDragging=true; seekTo(e); },{passive:true});
+track.addEventListener("touchmove",  e=>{ seekTo(e); },{passive:true});
+track.addEventListener("touchend",   ()=>{ isDragging=false; });
+track.addEventListener("mousedown",  ()=>{ isDragging=true; });
+window.addEventListener("mousemove", e=>{ if(isDragging) seekTo(e); });
+window.addEventListener("mouseup",   ()=>{ isDragging=false; });
+
+/* search */
+$("#q").addEventListener("input", renderList);
+
+/* ── WeChat modal ── */
+$("#btn-contact").onclick = () => $("#wechat-modal").classList.add("open");
+$("#wechat-backdrop").onclick = () => $("#wechat-modal").classList.remove("open");
+$("#wechat-close").onclick = () => $("#wechat-modal").classList.remove("open");
+
+/* init */
+renderMonthNav();
+renderList();
+syncPlayIcon(false);
+</script>
+</body>
+</html>
