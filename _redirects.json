@@ -1,0 +1,1 @@
+{"endpoints":[{"path":"/audio/*.wav","contentType":"audio/wav"},{"path":"/audio/*.mp3","contentType":"audio/mpeg"},{"path":"/audio/*.m4a","contentType":"audio/mp4"}]}
