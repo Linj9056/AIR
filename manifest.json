@@ -1,0 +1,14 @@
+{
+  "name": "我的播客库",
+  "short_name": "播客",
+  "description": "行业调研·白皮书·市场趋势 播客回顾",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0b14",
+  "theme_color": "#0b0b14",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
